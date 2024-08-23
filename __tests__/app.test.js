@@ -7,8 +7,14 @@ const testData = require('../db/data/test-data');
 beforeEach(() => seed(testData));
 afterAll(() => db.end());
 
+describe('GET /not-a-route', () => {
+  it('404: responds with not found', () => {
+    return request(app).get('/not-a-route').expect(404);
+  });
+});
+
 describe('GET /api/topics', () => {
-  it('200: should respond with all topics', () => {
+  it('200: responds with an array of topic objects', () => {
     return request(app)
       .get('/api/topics')
       .expect(200)
