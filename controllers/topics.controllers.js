@@ -11,9 +11,13 @@ exports.getEndpoints = (req, res) => {
   res.send({ endpoints: endpointsData });
 };
 
-exports.getArticle = (req, res) => {
+exports.getArticle = (req, res, next) => {
   const { article_id } = req.params;
-  selectArticle(article_id).then((selectedArticle) => {
-    res.send({ article: selectedArticle });
-  });
+  selectArticle(article_id)
+    .then((selectedArticle) => {
+      res.send({ article: selectedArticle });
+    })
+    .catch((err) => {
+      next(err);
+    });
 };
