@@ -127,3 +127,47 @@ describe('GET /api/articles', () => {
       });
   });
 });
+
+describe('GET /api/articles/:article_id/comments', () => {
+  it('200: responds with all comments for an article, sorted by date in descending order', () => {
+    return request(app)
+      .get('/api/articles/3/comments')
+      .expect(200)
+      .then(({ body: { comments } }) => {
+        expect(comments.length).toBe(2);
+        expect(comments).toBeSortedBy('created_at', { descending: true });
+        comments.forEach((comment) => {
+          expect(typeof comment.comment_id).toBe('number');
+          expect(typeof comment.votes).toBe('number');
+          expect(typeof comment.created_at).toBe('string');
+          expect(typeof comment.author).toBe('string');
+          expect(typeof comment.body).toBe('string');
+          expect(typeof comment.article_id).toBe('number');
+        });
+      });
+  });
+  it('400: responds with bad request for an invalid article_id', () => {
+    return request(app)
+      .get('/api/articles/not-an-id/comments')
+      .expect(400)
+      .then(({ body: { msg } }) => {
+        expect(msg).toBe('Bad request');
+      });
+  });
+  it('404: responds with not found for an article with no comments', () => {
+    return request(app)
+      .get('/api/articles/7/comments')
+      .expect(404)
+      .then(({ body: { msg } }) => {
+        expect(msg).toBe('Not found');
+      });
+  });
+  it('↳ or if the article does not exist', () => {
+    return request(app)
+      .get('/api/articles/999/comments')
+      .expect(404)
+      .then(({ body: { msg } }) => {
+        expect(msg).toBe('Not found');
+      });
+  });
+});
