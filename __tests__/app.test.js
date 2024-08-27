@@ -71,4 +71,12 @@ describe('GET /api/articles/:article_id', () => {
         expect(msg).toBe('Bad request');
       });
   });
+  it('404: responds with not found for a valid but non-existent id', () => {
+    return request(app)
+      .get('/api/articles/999')
+      .expect(404)
+      .then(({ body: { msg } }) => {
+        expect(msg).toBe('Not found');
+      });
+  });
 });
