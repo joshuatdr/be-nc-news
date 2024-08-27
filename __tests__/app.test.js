@@ -76,3 +76,54 @@ describe('GET /api/articles/:article_id', () => {
       });
   });
 });
+
+describe('GET /api/articles', () => {
+  it('200: responds with an array of article objects, sorted by date in descending order', () => {
+    return request(app)
+      .get('/api/articles')
+      .expect(200)
+      .then(({ body: { articles } }) => {
+        expect(articles.length).toBe(13);
+        expect(articles).toBeSortedBy('created_at', { descending: true });
+        articles.forEach((article) => {
+          expect(typeof article.author).toBe('string');
+          expect(typeof article.title).toBe('string');
+          expect(typeof article.article_id).toBe('number');
+          expect(typeof article.topic).toBe('string');
+          expect(typeof article.created_at).toBe('string');
+          expect(typeof article.votes).toBe('number');
+          expect(typeof article.article_img_url).toBe('string');
+          expect(article).not.toHaveProperty('body');
+        });
+      });
+  });
+  it('↳ comment_count for each article should be the total count of all comments with this article_id', () => {
+    return request(app)
+      .get('/api/articles')
+      .expect(200)
+      .then(({ body: { articles } }) => {
+        articles.forEach((article) => {
+          expect(typeof article.comment_count).toBe('number');
+        });
+        const commentCounts = articles.map(({ comment_count, article_id }) => [
+          comment_count,
+          article_id,
+        ]);
+        expect(commentCounts).toEqual([
+          [2, 3],
+          [1, 6],
+          [0, 2],
+          [0, 12],
+          [0, 13],
+          [2, 5],
+          [11, 1],
+          [2, 9],
+          [0, 10],
+          [0, 4],
+          [0, 8],
+          [0, 11],
+          [0, 7],
+        ]);
+      });
+  });
+});

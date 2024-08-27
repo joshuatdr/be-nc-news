@@ -1,8 +1,8 @@
 const db = require('../db/connection');
 
 exports.selectTopics = () => {
-  return db.query(`SELECT * FROM topics`).then((data) => {
-    return data.rows;
+  return db.query(`SELECT * FROM topics`).then(({ rows }) => {
+    return rows;
   });
 };
 
@@ -15,4 +15,33 @@ exports.selectArticle = (article_id) => {
       }
       return selectedArticle;
     });
+};
+
+exports.selectArticles = () => {
+  const pendingProms = [];
+  pendingProms.push(
+    db.query(
+      `SELECT COUNT(comments.article_id) AS comment_count, articles.article_id
+      FROM articles JOIN comments ON articles.article_id = comments.article_id
+      GROUP BY articles.article_id`
+    )
+  );
+  pendingProms.push(
+    db.query(
+      `SELECT author, title, article_id, topic, created_at, votes, article_img_url FROM articles ORDER BY created_at DESC`
+    )
+  );
+  return Promise.all(pendingProms).then(
+    ([{ rows: commentCounts }, { rows: articles }]) => {
+      for (article of articles) {
+        const articleCommentCount = commentCounts.find(
+          ({ article_id }) => article_id === article.article_id
+        );
+        article.comment_count = articleCommentCount
+          ? +articleCommentCount.comment_count
+          : 0;
+      }
+      return articles;
+    }
+  );
 };
