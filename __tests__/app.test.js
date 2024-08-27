@@ -13,6 +13,22 @@ describe('GET /not-a-route', () => {
   });
 });
 
+describe('GET /api', () => {
+  it('200: responds with an object detailing all of the available endpoints', () => {
+    return request(app)
+      .get('/api')
+      .expect(200)
+      .then(({ body: { endpoints } }) => {
+        expect(endpoints).toHaveProperty('GET /api', expect.any(Object));
+        expect(endpoints).toHaveProperty('GET /api/topics', expect.any(Object));
+        expect(endpoints).toHaveProperty(
+          'GET /api/articles',
+          expect.any(Object)
+        );
+      });
+  });
+});
+
 describe('GET /api/topics', () => {
   it('200: responds with an array of topic objects', () => {
     return request(app)
