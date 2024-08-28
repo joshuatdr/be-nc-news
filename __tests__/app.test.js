@@ -130,6 +130,75 @@ describe('GET /api/articles', () => {
         ]);
       });
   });
+  describe('queries:', () => {
+    it('200: sort_by sorts articles by any valid column', () => {
+      const validColumns = [
+        'author',
+        'title',
+        'article_id',
+        'topic',
+        'created_at',
+        'votes',
+        'comment_count',
+      ];
+      const sortByTests = validColumns.map((query) => {
+        return request(app)
+          .get(`/api/articles?sort_by=${query}`)
+          .expect(200)
+          .then(({ body: { articles } }) => {
+            expect(articles).toBeSortedBy(query, { descending: true });
+          });
+      });
+      return Promise.all(sortByTests);
+    });
+    it('200: order can be set to ascending or descending', () => {
+      const ascTest = request(app)
+        .get('/api/articles?order=asc')
+        .expect(200)
+        .then(({ body: { articles } }) => {
+          expect(articles).toBeSortedBy('created_at', { descending: false });
+        });
+      const descTest = request(app)
+        .get('/api/articles?order=desc')
+        .expect(200)
+        .then(({ body: { articles } }) => {
+          expect(articles).toBeSortedBy('created_at', { descending: true });
+        });
+      return Promise.all([ascTest, descTest]);
+    });
+    it('200: sort_by and order can both be passed in a single query', () => {
+      return request(app)
+        .get('/api/articles?sort_by=comment_count&order=asc')
+        .expect(200)
+        .then(({ body: { articles } }) => {
+          expect(articles).toBeSortedBy('comment_count', { descending: false });
+        });
+    });
+    it('200: ignores unexpected query parameters', () => {
+      return request(app)
+        .get('/api/articles?sort_by=votes&order=desc&cool=extremely')
+        .expect(200)
+        .then(({ body: { articles } }) => {
+          expect(articles).toBeSortedBy('votes', { descending: true });
+        });
+    });
+    it('400: responds with bad request if sort_by is not a whitelisted column', () => {
+      return request(app)
+        .get('/api/articles?sort_by=article_img_url')
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe('Bad request');
+        });
+    });
+    it('400: responds with bad request if order is invalid', () => {
+      return request(app)
+        .get('/api/articles?order=entropy')
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe('Bad request');
+        });
+    });
+  });
 });
 
 describe('GET /api/articles/:article_id/comments', () => {
