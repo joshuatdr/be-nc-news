@@ -250,3 +250,57 @@ describe('POST /api/articles/:article_id/comments', () => {
       });
   });
 });
+
+describe('PATCH /api/articles/:article_id', () => {
+  it('200: updates and responds with an article by article_id', () => {
+    const incVotes = { inc_votes: -200, dummy: 'hi' };
+    return request(app)
+      .patch('/api/articles/1')
+      .send(incVotes)
+      .expect(200)
+      .then(({ body: { article } }) => {
+        expect(article.votes).toBe(-100);
+      });
+  });
+  it('400: responds with bad request if inc_votes is invalid or missing', () => {
+    const textVotes = { inc_votes: 'five votes' };
+    const noVotes = { dummy: 999 };
+    const testPromises = [
+      request(app)
+        .patch('/api/articles/1')
+        .send(textVotes)
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe('Bad request');
+        }),
+      request(app)
+        .patch('/api/articles/1')
+        .send(noVotes)
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe('Bad request');
+        }),
+    ];
+    return Promise.all(testPromises);
+  });
+  it('↳ if article_id is not valid', () => {
+    const incVotes = { inc_votes: 1 };
+    return request(app)
+      .patch('/api/articles/not-an-id')
+      .send(incVotes)
+      .expect(400)
+      .then(({ body: { msg } }) => {
+        expect(msg).toBe('Bad request');
+      });
+  });
+  it('↳ or if article_id is valid but non-existent', () => {
+    const incVotes = { inc_votes: -1 };
+    return request(app)
+      .patch('/api/articles/999')
+      .send(incVotes)
+      .expect(400)
+      .then(({ body: { msg } }) => {
+        expect(msg).toBe('Bad request');
+      });
+  });
+});

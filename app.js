@@ -4,7 +4,7 @@ const app = express();
 const {
   apiControllers: { getEndpoints },
   topicControllers: { getTopics },
-  articleControllers: { getArticles, getArticle },
+  articleControllers: { getArticles, getArticle, patchArticle },
   commentControllers: { getCommentsByArticle, postComment },
 } = require('./controllers');
 
@@ -23,6 +23,8 @@ app.get('/api/topics', getTopics);
 app.get('/api/articles', getArticles);
 
 app.get('/api/articles/:article_id', getArticle);
+
+app.patch('/api/articles/:article_id', patchArticle);
 
 app.get('/api/articles/:article_id/comments', getCommentsByArticle);
 

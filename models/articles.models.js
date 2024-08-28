@@ -24,3 +24,21 @@ exports.selectArticles = () => {
       return rows;
     });
 };
+
+exports.updateArticle = (inc_votes, article_id) => {
+  return db
+    .query(
+      `
+      UPDATE articles 
+      SET votes = votes + $1 
+      WHERE article_id = $2
+      RETURNING *`,
+      [inc_votes, article_id]
+    )
+    .then(({ rows: [article] }) => {
+      if (!article) {
+        return Promise.reject({ status: 400, msg: 'Bad request' });
+      }
+      return article;
+    });
+};
