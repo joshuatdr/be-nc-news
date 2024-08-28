@@ -171,3 +171,82 @@ describe('GET /api/articles/:article_id/comments', () => {
       });
   });
 });
+
+describe('POST /api/articles/:article_id/comments', () => {
+  it('201: adds a comment for an article and responds with the added comment', () => {
+    const testComment = { username: 'lurker', body: 'wow... cool article' };
+    return request(app)
+      .post('/api/articles/3/comments')
+      .send(testComment)
+      .expect(201)
+      .then(({ body: { comment } }) => {
+        expect(comment.comment_id).toBe(19);
+        expect(comment.body).toBe('wow... cool article');
+        expect(comment.article_id).toBe(3);
+        expect(comment.author).toBe('lurker');
+        expect(comment.votes).toBe(0);
+        expect(typeof comment.created_at).toBe('string');
+      });
+  });
+  it('400: responds with bad request if missing username or body', () => {
+    const emptyComment = {};
+    const noUsername = { body: 'who wrote this?!' };
+    const noBody = { username: 'nobody' };
+
+    const testPromises = [
+      request(app)
+        .post('/api/articles/3/comments')
+        .expect(400)
+        .send(emptyComment)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe('Bad request');
+        }),
+      request(app)
+        .post('/api/articles/3/comments')
+        .expect(400)
+        .send(noBody)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe('Bad request');
+        }),
+      request(app)
+        .post('/api/articles/3/comments')
+        .expect(400)
+        .send(noUsername)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe('Bad request');
+        }),
+    ];
+
+    return Promise.all(testPromises);
+  });
+  it('↳ if username does not match a username in the users table', () => {
+    const testComment = { username: 'joshuatdr', body: 'did you know gaming' };
+    return request(app)
+      .post('/api/articles/3/comments')
+      .send(testComment)
+      .expect(400)
+      .then(({ body: { msg } }) => {
+        expect(msg).toBe('Bad request');
+      });
+  });
+  it('↳ if article_id is invalid', () => {
+    const testComment = { username: 'lurker', body: 'what does this do' };
+    return request(app)
+      .post('/api/articles/not-an-id/comments')
+      .send(testComment)
+      .expect(400)
+      .then(({ body: { msg } }) => {
+        expect(msg).toBe('Bad request');
+      });
+  });
+  it('↳ or if article_id is valid but non-existent', () => {
+    const testComment = { username: 'lurker', body: 'ahead of the curve' };
+    return request(app)
+      .post('/api/articles/999/comments')
+      .send(testComment)
+      .expect(400)
+      .then(({ body: { msg } }) => {
+        expect(msg).toBe('Bad request');
+      });
+  });
+});

@@ -14,3 +14,12 @@ exports.getCommentsByArticle = (req, res, next) => {
     });
 };
 
+exports.postComment = (req, res, next) => {
+  const { article_id } = req.params;
+  const { username, body } = req.body;
+  insertComment(body, article_id, username)
+    .then((comment) => {
+      res.status(201).send({ comment: comment });
+    })
+    .catch((err) => next(err));
+};
