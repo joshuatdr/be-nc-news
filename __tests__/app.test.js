@@ -304,3 +304,34 @@ describe('PATCH /api/articles/:article_id', () => {
       });
   });
 });
+
+describe('DELETE /api/comments/:comment_id', () => {
+  it('204: deletes a specified comment and responds with no content', () => {
+    return request(app)
+      .delete('/api/comments/10')
+      .expect(204)
+      .then(() => {
+        return request(app).get('/api/articles/3/comments').expect(200);
+      })
+      .then(({ body: { comments } }) => {
+        expect(comments.length).toBe(1);
+        expect(comments[0].comment_id).not.toBe(10);
+      });
+  });
+  it('400: responds with bad request if comment_id is invalid', () => {
+    return request(app)
+      .delete('/api/comments/not-an-id')
+      .expect(400)
+      .then(({ body: { msg } }) => {
+        expect(msg).toBe('Bad request');
+      });
+  });
+  it('404: responds with not found if comment_id is valid but non-existent', () => {
+    return request(app)
+      .delete('/api/comments/999')
+      .expect(404)
+      .then(({ body: { msg } }) => {
+        expect(msg).toBe('Not found');
+      });
+  });
+});
