@@ -192,7 +192,7 @@ describe('GET /api/articles', () => {
     });
     it('400: responds with bad request if order is invalid', () => {
       return request(app)
-        .get('/api/articles?order=entropy')
+        .get('/api/articles?order=asc;SELECT*FROM users;')
         .expect(400)
         .then(({ body: { msg } }) => {
           expect(msg).toBe('Bad request');

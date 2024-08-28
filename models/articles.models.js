@@ -22,24 +22,24 @@ exports.selectArticles = (sort_by = 'created_at', order = 'DESC') => {
     'votes',
     'comment_count',
   ];
-  if (!validColumns.includes(sort_by)) {
+  const validOrder = ['ASC', 'DESC'];
+
+  if (
+    !validColumns.includes(sort_by) ||
+    !validOrder.includes(order.toUpperCase())
+  ) {
     return Promise.reject({ status: 400, msg: 'Bad request' });
   }
-  return db
-    .query(
-      format(
-        `
+
+  const queryStr = `
     SELECT articles.author, title, articles.article_id, topic, articles.created_at, articles.votes, article_img_url, COUNT(comments.article_id)::INT AS comment_count 
     FROM articles LEFT JOIN comments ON articles.article_id = comments.article_id
     GROUP BY articles.article_id
-    ORDER BY %I %s`,
-        sort_by,
-        order
-      )
-    )
-    .then(({ rows }) => {
-      return rows;
-    });
+    ORDER BY %I %s`;
+
+  return db.query(format(queryStr, sort_by, order)).then(({ rows }) => {
+    return rows;
+  });
 };
 
 exports.updateArticle = (inc_votes, article_id) => {
