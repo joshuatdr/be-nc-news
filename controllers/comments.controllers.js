@@ -3,12 +3,13 @@ const {
   insertComment,
   removeComment,
 } = require('../models/comments.models');
+const { selectArticle } = require('../models/articles.models');
 
 exports.getCommentsByArticle = (req, res, next) => {
   const { article_id } = req.params;
-  selectCommentsByArticle(article_id)
-    .then((comments) => {
-      res.status(200).send({ comments: comments });
+  Promise.all([selectCommentsByArticle(article_id), selectArticle(article_id)])
+    .then(([comments]) => {
+      res.status(200).send({ comments });
     })
     .catch((err) => {
       next(err);
@@ -20,9 +21,11 @@ exports.postComment = (req, res, next) => {
   const { username, body } = req.body;
   insertComment(body, article_id, username)
     .then((comment) => {
-      res.status(201).send({ comment: comment });
+      res.status(201).send({ comment });
     })
-    .catch((err) => next(err));
+    .catch((err) => {
+      next(err);
+    });
 };
 
 exports.deleteComment = (req, res, next) => {

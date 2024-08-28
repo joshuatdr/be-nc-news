@@ -7,8 +7,8 @@ const {
 exports.getArticle = (req, res, next) => {
   const { article_id } = req.params;
   selectArticle(article_id)
-    .then((selectedArticle) => {
-      res.send({ article: selectedArticle });
+    .then((article) => {
+      res.status(200).send({ article });
     })
     .catch((err) => {
       next(err);
@@ -16,17 +16,17 @@ exports.getArticle = (req, res, next) => {
 };
 
 exports.getArticles = (req, res) => {
-  selectArticles().then((rows) => {
-    res.status(200).send({ articles: rows });
+  selectArticles().then((articles) => {
+    res.status(200).send({ articles });
   });
 };
 
 exports.patchArticle = (req, res, next) => {
   const { inc_votes } = req.body;
   const { article_id } = req.params;
-  updateArticle(inc_votes, article_id)
-    .then((article) => {
-      res.status(200).send({ article: article });
+  Promise.all([updateArticle(inc_votes, article_id), selectArticle(article_id)])
+    .then(([article]) => {
+      res.status(200).send({ article });
     })
     .catch((err) => {
       next(err);

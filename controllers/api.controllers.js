@@ -1,5 +1,5 @@
-const endpointsData = require('../endpoints.json');
+const endpoints = require('../endpoints.json');
 
 exports.getEndpoints = (req, res) => {
-  res.send({ endpoints: endpointsData });
+  res.status(200).send({ endpoints });
 };

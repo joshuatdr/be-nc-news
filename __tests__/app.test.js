@@ -33,8 +33,10 @@ describe('GET /api/topics', () => {
       .then(({ body: { topics } }) => {
         expect(topics.length).toBe(3);
         topics.forEach((topic) => {
-          expect(typeof topic.description).toBe('string');
-          expect(typeof topic.slug).toBe('string');
+          expect(topic).toMatchObject({
+            description: expect.any(String),
+            slug: expect.any(String),
+          });
         });
       });
   });
@@ -86,18 +88,20 @@ describe('GET /api/articles', () => {
         expect(articles.length).toBe(13);
         expect(articles).toBeSortedBy('created_at', { descending: true });
         articles.forEach((article) => {
-          expect(typeof article.author).toBe('string');
-          expect(typeof article.title).toBe('string');
-          expect(typeof article.article_id).toBe('number');
-          expect(typeof article.topic).toBe('string');
-          expect(typeof article.created_at).toBe('string');
-          expect(typeof article.votes).toBe('number');
-          expect(typeof article.article_img_url).toBe('string');
+          expect(article).toMatchObject({
+            author: expect.any(String),
+            title: expect.any(String),
+            article_id: expect.any(Number),
+            topic: expect.any(String),
+            created_at: expect.any(String),
+            votes: expect.any(Number),
+            article_img_url: expect.any(String),
+          });
           expect(article).not.toHaveProperty('body');
         });
       });
   });
-  it('↳ comment_count for each article should be the total count of all comments with this article_id', () => {
+  it('200: comment_count for each article should be the total count of all comments with this article_id', () => {
     return request(app)
       .get('/api/articles')
       .expect(200)
@@ -137,13 +141,23 @@ describe('GET /api/articles/:article_id/comments', () => {
         expect(comments.length).toBe(2);
         expect(comments).toBeSortedBy('created_at', { descending: true });
         comments.forEach((comment) => {
-          expect(typeof comment.comment_id).toBe('number');
-          expect(typeof comment.votes).toBe('number');
-          expect(typeof comment.created_at).toBe('string');
-          expect(typeof comment.author).toBe('string');
-          expect(typeof comment.body).toBe('string');
-          expect(typeof comment.article_id).toBe('number');
+          expect(comment).toMatchObject({
+            comment_id: expect.any(Number),
+            body: expect.any(String),
+            article_id: expect.any(Number),
+            author: expect.any(String),
+            votes: expect.any(Number),
+            created_at: expect.any(String),
+          });
         });
+      });
+  });
+  it('200: responds with empty array for an article with no comments', () => {
+    return request(app)
+      .get('/api/articles/7/comments')
+      .expect(200)
+      .then(({ body: { comments } }) => {
+        expect(comments).toEqual([]);
       });
   });
   it('400: responds with bad request for an invalid article_id', () => {
@@ -154,15 +168,7 @@ describe('GET /api/articles/:article_id/comments', () => {
         expect(msg).toBe('Bad request');
       });
   });
-  it('404: responds with not found for an article with no comments', () => {
-    return request(app)
-      .get('/api/articles/7/comments')
-      .expect(404)
-      .then(({ body: { msg } }) => {
-        expect(msg).toBe('Not found');
-      });
-  });
-  it('↳ or if the article does not exist', () => {
+  it('404: responds with not found for a valid but non-existent article_id', () => {
     return request(app)
       .get('/api/articles/999/comments')
       .expect(404)
@@ -180,12 +186,36 @@ describe('POST /api/articles/:article_id/comments', () => {
       .send(testComment)
       .expect(201)
       .then(({ body: { comment } }) => {
-        expect(comment.comment_id).toBe(19);
-        expect(comment.body).toBe('wow... cool article');
-        expect(comment.article_id).toBe(3);
-        expect(comment.author).toBe('lurker');
-        expect(comment.votes).toBe(0);
-        expect(typeof comment.created_at).toBe('string');
+        expect(comment).toMatchObject({
+          comment_id: expect.any(Number),
+          body: 'wow... cool article',
+          article_id: 3,
+          author: 'lurker',
+          votes: 0,
+          created_at: expect.any(String),
+        });
+      });
+  });
+  it('201: comment will post given valid username and body even if unnecessary properties are present', () => {
+    const testComment = {
+      username: 'lurker',
+      body: 'wow... cool article',
+      dummy: 'what am i doing here',
+      another_dummy: 999,
+    };
+    return request(app)
+      .post('/api/articles/4/comments')
+      .send(testComment)
+      .expect(201)
+      .then(({ body: { comment } }) => {
+        expect(comment).toMatchObject({
+          comment_id: expect.any(Number),
+          body: 'wow... cool article',
+          article_id: 4,
+          author: 'lurker',
+          votes: 0,
+          created_at: expect.any(String),
+        });
       });
   });
   it('400: responds with bad request if missing username or body', () => {
@@ -219,17 +249,7 @@ describe('POST /api/articles/:article_id/comments', () => {
 
     return Promise.all(testPromises);
   });
-  it('↳ if username does not match a username in the users table', () => {
-    const testComment = { username: 'joshuatdr', body: 'did you know gaming' };
-    return request(app)
-      .post('/api/articles/3/comments')
-      .send(testComment)
-      .expect(400)
-      .then(({ body: { msg } }) => {
-        expect(msg).toBe('Bad request');
-      });
-  });
-  it('↳ if article_id is invalid', () => {
+  it('400: if article_id is invalid', () => {
     const testComment = { username: 'lurker', body: 'what does this do' };
     return request(app)
       .post('/api/articles/not-an-id/comments')
@@ -239,51 +259,85 @@ describe('POST /api/articles/:article_id/comments', () => {
         expect(msg).toBe('Bad request');
       });
   });
-  it('↳ or if article_id is valid but non-existent', () => {
+  it('404: responds with not found if article_id is valid but non-existent', () => {
     const testComment = { username: 'lurker', body: 'ahead of the curve' };
     return request(app)
       .post('/api/articles/999/comments')
       .send(testComment)
-      .expect(400)
+      .expect(404)
       .then(({ body: { msg } }) => {
-        expect(msg).toBe('Bad request');
+        expect(msg).toBe('Not found');
+      });
+  });
+  it('404: if username does not match a username in the users table', () => {
+    const testComment = { username: 'joshuatdr', body: 'did you know gaming' };
+    return request(app)
+      .post('/api/articles/3/comments')
+      .send(testComment)
+      .expect(404)
+      .then(({ body: { msg } }) => {
+        expect(msg).toBe('Not found');
       });
   });
 });
 
 describe('PATCH /api/articles/:article_id', () => {
   it('200: updates and responds with an article by article_id', () => {
-    const incVotes = { inc_votes: -200, dummy: 'hi' };
+    const incVotes = { inc_votes: -200 };
     return request(app)
       .patch('/api/articles/1')
       .send(incVotes)
       .expect(200)
       .then(({ body: { article } }) => {
-        expect(article.votes).toBe(-100);
+        expect(article).toMatchObject({
+          article_id: 1,
+          title: expect.any(String),
+          topic: expect.any(String),
+          author: expect.any(String),
+          body: expect.any(String),
+          created_at: expect.any(String),
+          votes: -100,
+          article_img_url: expect.any(String),
+        });
+      });
+  });
+  it('200: updates article given valid inc_votes even if unnecessary properties are present', () => {
+    const incVotes = { inc_votes: 50, dummy: 'i do nothing' };
+    return request(app)
+      .patch('/api/articles/2')
+      .send(incVotes)
+      .expect(200)
+      .then(({ body: { article } }) => {
+        expect(article).toMatchObject({
+          article_id: 2,
+          title: expect.any(String),
+          topic: expect.any(String),
+          author: expect.any(String),
+          body: expect.any(String),
+          created_at: expect.any(String),
+          votes: 50,
+          article_img_url: expect.any(String),
+        });
       });
   });
   it('400: responds with bad request if inc_votes is invalid or missing', () => {
-    const textVotes = { inc_votes: 'five votes' };
-    const noVotes = { dummy: 999 };
-    const testPromises = [
-      request(app)
-        .patch('/api/articles/1')
-        .send(textVotes)
-        .expect(400)
-        .then(({ body: { msg } }) => {
-          expect(msg).toBe('Bad request');
-        }),
-      request(app)
-        .patch('/api/articles/1')
-        .send(noVotes)
-        .expect(400)
-        .then(({ body: { msg } }) => {
-          expect(msg).toBe('Bad request');
-        }),
-    ];
-    return Promise.all(testPromises);
+    const invalidIncVotes = request(app)
+      .patch('/api/articles/1')
+      .send({ inc_votes: 'five votes' })
+      .expect(400)
+      .then(({ body: { msg } }) => {
+        expect(msg).toBe('Bad request');
+      });
+    const missingIncVotes = request(app)
+      .patch('/api/articles/1')
+      .send({ dummy: 999 })
+      .expect(400)
+      .then(({ body: { msg } }) => {
+        expect(msg).toBe('Bad request');
+      });
+    return Promise.all([invalidIncVotes, missingIncVotes]);
   });
-  it('↳ if article_id is not valid', () => {
+  it('400: if article_id is not valid', () => {
     const incVotes = { inc_votes: 1 };
     return request(app)
       .patch('/api/articles/not-an-id')
@@ -293,14 +347,14 @@ describe('PATCH /api/articles/:article_id', () => {
         expect(msg).toBe('Bad request');
       });
   });
-  it('↳ or if article_id is valid but non-existent', () => {
+  it('404: responds with not found if article_id is valid but non-existent', () => {
     const incVotes = { inc_votes: -1 };
     return request(app)
       .patch('/api/articles/999')
       .send(incVotes)
-      .expect(400)
+      .expect(404)
       .then(({ body: { msg } }) => {
-        expect(msg).toBe('Bad request');
+        expect(msg).toBe('Not found');
       });
   });
 });

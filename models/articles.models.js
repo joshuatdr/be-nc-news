@@ -36,9 +36,6 @@ exports.updateArticle = (inc_votes, article_id) => {
       [inc_votes, article_id]
     )
     .then(({ rows: [article] }) => {
-      if (!article) {
-        return Promise.reject({ status: 400, msg: 'Bad request' });
-      }
       return article;
     });
 };
