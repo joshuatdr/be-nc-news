@@ -1,12 +1,13 @@
 const express = require('express');
 const app = express();
+
 const {
-  getTopics,
-  getEndpoints,
-  getArticles,
-  getArticle,
-  getCommentsByArticle,
-} = require('./controllers/topics.controllers');
+  apiControllers: { getEndpoints },
+  topicControllers: { getTopics },
+  articleControllers: { getArticles, getArticle },
+  commentControllers: { getCommentsByArticle, postComment },
+} = require('./controllers');
+
 const {
   psqlErrorHandler,
   customErrorHandler,
