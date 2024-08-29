@@ -198,6 +198,41 @@ describe('GET /api/articles', () => {
           expect(msg).toBe('Bad request');
         });
     });
+    it('200: topic filters articles to match the specified topic', () => {
+      return request(app)
+        .get('/api/articles?topic=mitch')
+        .expect(200)
+        .then(({ body: { articles } }) => {
+          articles.forEach((article) => {
+            expect(article).toMatchObject({
+              author: expect.any(String),
+              title: expect.any(String),
+              article_id: expect.any(Number),
+              topic: 'mitch',
+              created_at: expect.any(String),
+              votes: expect.any(Number),
+              article_img_url: expect.any(String),
+              comment_count: expect.any(Number),
+            });
+          });
+        });
+    });
+    it('400: responds with bad request if topic does not exist', () => {
+      return request(app)
+        .get('/api/articles?topic=gaming;DROP TABLE users;')
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe('Bad request');
+        });
+    });
+    it('404: responds with not found if topic exists but no articles have this topic', () => {
+      return request(app)
+        .get('/api/articles?topic=paper')
+        .expect(404)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe('Not found');
+        });
+    });
   });
 });
 
