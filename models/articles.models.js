@@ -1,4 +1,5 @@
 const db = require('../db/connection');
+const format = require('pg-format');
 
 exports.selectArticle = (article_id) => {
   return db
@@ -11,18 +12,34 @@ exports.selectArticle = (article_id) => {
     });
 };
 
-exports.selectArticles = () => {
-  return db
-    .query(
-      `
+exports.selectArticles = (sort_by = 'created_at', order = 'DESC') => {
+  const validColumns = [
+    'author',
+    'title',
+    'article_id',
+    'topic',
+    'created_at',
+    'votes',
+    'comment_count',
+  ];
+  const validOrder = ['ASC', 'DESC'];
+
+  if (
+    !validColumns.includes(sort_by) ||
+    !validOrder.includes(order.toUpperCase())
+  ) {
+    return Promise.reject({ status: 400, msg: 'Bad request' });
+  }
+
+  const queryStr = `
     SELECT articles.author, title, articles.article_id, topic, articles.created_at, articles.votes, article_img_url, COUNT(comments.article_id)::INT AS comment_count 
     FROM articles LEFT JOIN comments ON articles.article_id = comments.article_id
     GROUP BY articles.article_id
-    ORDER BY created_at DESC`
-    )
-    .then(({ rows }) => {
-      return rows;
-    });
+    ORDER BY %I %s`;
+
+  return db.query(format(queryStr, sort_by, order)).then(({ rows }) => {
+    return rows;
+  });
 };
 
 exports.updateArticle = (inc_votes, article_id) => {

@@ -11,9 +11,7 @@ exports.getCommentsByArticle = (req, res, next) => {
     .then(([comments]) => {
       res.status(200).send({ comments });
     })
-    .catch((err) => {
-      next(err);
-    });
+    .catch((err) => next(err));
 };
 
 exports.postComment = (req, res, next) => {
@@ -23,9 +21,7 @@ exports.postComment = (req, res, next) => {
     .then((comment) => {
       res.status(201).send({ comment });
     })
-    .catch((err) => {
-      next(err);
-    });
+    .catch((err) => next(err));
 };
 
 exports.deleteComment = (req, res, next) => {
@@ -34,7 +30,5 @@ exports.deleteComment = (req, res, next) => {
     .then(() => {
       res.status(204).send();
     })
-    .catch((err) => {
-      next(err);
-    });
+    .catch((err) => next(err));
 };
