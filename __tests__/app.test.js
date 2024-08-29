@@ -48,7 +48,7 @@ describe('GET /api/articles/:article_id', () => {
       .get('/api/articles/8')
       .expect(200)
       .then(({ body: { article } }) => {
-        expect(article).toEqual({
+        expect(article).toMatchObject({
           article_id: 8,
           title: 'Does Mitch predate civilisation?',
           topic: 'mitch',
@@ -59,6 +59,14 @@ describe('GET /api/articles/:article_id', () => {
           article_img_url:
             'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700',
         });
+      });
+  });
+  it('200: article has correct comment_count', () => {
+    return request(app)
+      .get('/api/articles/1')
+      .expect(200)
+      .then(({ body: { article } }) => {
+        expect(article.comment_count).toBe(11);
       });
   });
   it('400: responds with bad request for an invalid article_id', () => {
