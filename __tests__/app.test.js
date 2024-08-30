@@ -502,6 +502,56 @@ describe('DELETE /api/comments/:comment_id', () => {
   });
 });
 
+describe('PATCH /api/comments/:comment_id', () => {
+  it('200: updates votes and responds with a specified comment', () => {
+    const increment = request(app)
+      .patch('/api/comments/8')
+      .send({ inc_votes: 5 })
+      .then(({ body: { comment } }) => {
+        expect(comment).toMatchObject({
+          comment_id: 8,
+          body: 'Delicious crackerbreads',
+          article_id: 1,
+          author: 'icellusedkars',
+          votes: 5,
+          created_at: '2020-04-14T20:19:00.000Z',
+        });
+      });
+    const decrement = request(app)
+      .patch('/api/comments/9')
+      .send({ inc_votes: -10 })
+      .then(({ body: { comment } }) => {
+        expect(comment).toMatchObject({
+          comment_id: 9,
+          body: 'Superficially charming',
+          article_id: 1,
+          author: 'icellusedkars',
+          votes: -10,
+          created_at: '2020-01-01T03:08:00.000Z',
+        });
+      });
+    return Promise.all([increment, decrement]);
+  });
+  it('400: responds with bad request if comment_id is invalid', () => {
+    return request(app)
+      .patch('/api/comments/not-an-id')
+      .send({ inc_votes: 999 })
+      .expect(400)
+      .then(({ body: { msg } }) => {
+        expect(msg).toBe('Bad request');
+      });
+  });
+  it('404: responds with not found if comment_id is valid but non-existent', () => {
+    return request(app)
+      .patch('/api/comments/999')
+      .send({ inc_votes: -1 })
+      .expect(404)
+      .then(({ body: { msg } }) => {
+        expect(msg).toBe('Not found');
+      });
+  });
+});
+
 describe('GET /api/users', () => {
   it('200: responds with an array of user objects', () => {
     return request(app)
