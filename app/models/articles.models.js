@@ -31,9 +31,12 @@ exports.selectArticles = (sort_by = 'created_at', order = 'DESC', topic) => {
     SELECT articles.author, title, articles.article_id, topic, articles.created_at, articles.votes, article_img_url, COUNT(comments.article_id)::INT AS comment_count 
     FROM articles LEFT JOIN comments ON articles.article_id = comments.article_id`;
   const queryValues = [];
+  const queryProms = [];
 
   if (topic) {
+    const checkTopic = checkExists('topics', 'slug', topic);
     queryValues.push(topic);
+    queryProms.push(checkTopic);
     queryStr += ` WHERE topic = $1`;
   }
 
@@ -46,13 +49,17 @@ exports.selectArticles = (sort_by = 'created_at', order = 'DESC', topic) => {
 
   queryStr += ` GROUP BY articles.article_id ORDER BY ${sort_by} ${order}`;
 
-  return db.query(queryStr, queryValues).then(({ rows }) => {
-    if (!rows.length) {
-      return checkExists('topics', 'slug', topic).then(() => {
+  const dbQuery = db.query(queryStr, queryValues);
+  queryProms.push(dbQuery);
+
+  return Promise.all(queryProms).then((result) => {
+    if (queryProms.length === 2) {
+      if (!result[1].rows.length) {
         return Promise.reject({ status: 404, msg: 'Not found' });
-      });
+      }
+      return result[1].rows;
     }
-    return rows;
+    return result[0].rows;
   });
 };
 

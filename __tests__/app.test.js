@@ -225,12 +225,12 @@ describe('GET /api/articles', () => {
           });
         });
     });
-    it('400: responds with bad request if topic does not exist', () => {
+    it('404: responds with not found if topic does not exist', () => {
       return request(app)
         .get('/api/articles?topic=gaming;DROP TABLE users;')
-        .expect(400)
+        .expect(404)
         .then(({ body: { msg } }) => {
-          expect(msg).toBe('Bad request');
+          expect(msg).toBe('Not found');
         });
     });
     it('404: responds with not found if topic exists but no articles have this topic', () => {
@@ -515,6 +515,30 @@ describe('GET /api/users', () => {
             avatar_url: expect.any(String),
           });
         });
+      });
+  });
+});
+
+describe('GET /api/users/:username', () => {
+  it('200: responds with a specified user by their username', () => {
+    return request(app)
+      .get('/api/users/butter_bridge')
+      .expect(200)
+      .then(({ body: { user } }) => {
+        expect(user).toMatchObject({
+          username: 'butter_bridge',
+          avatar_url:
+            'https://www.healthytherapies.com/wp-content/uploads/2016/06/Lime3.jpg',
+          name: 'jonny',
+        });
+      });
+  });
+  it('404: responds with not found if username does not exist', () => {
+    return request(app)
+      .get('/api/users/iamnotarealuser')
+      .expect(404)
+      .then(({ body: { msg } }) => {
+        expect(msg).toBe('Not found');
       });
   });
 });
