@@ -11,7 +11,21 @@
   },
   "GET /api/articles": {
     "description": "serves an array of all articles",
-    "queries": ["sort_by", "order"],
+    "queries": [
+      {
+        "sort_by (default: created_at)": [
+          "author",
+          "title",
+          "article_id",
+          "topic",
+          "created_at",
+          "votes",
+          "comment_count"
+        ]
+      },
+      { "order (default: desc)": ["asc", "desc"] },
+      { "topic": ["any"] }
+    ],
     "exampleResponse": {
       "articles": [
         {
@@ -106,6 +120,19 @@
           "username": "lurker",
           "name": "do_nothing",
           "avatar_url": "https://www.golenbock.com/wp-content/uploads/2015/01/placeholder-user.png"
+        }
+      ]
+    }
+  },
+  "GET /api/users/:username": {
+    "description": "serves a specified user",
+    "queries": [],
+    "exampleResponse": {
+      "users": [
+        {
+          "username": "butter_bridge",
+          "avatar_url": "https://www.healthytherapies.com/wp-content/uploads/2016/06/Lime3.jpg",
+          "name": "jonny"
         }
       ]
     }
