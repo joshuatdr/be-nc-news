@@ -244,6 +244,155 @@ describe('GET /api/articles', () => {
   });
 });
 
+describe('POST /api/articles', () => {
+  it('201: responds with the newly created article', () => {
+    const testArticle = {
+      author: 'lurker',
+      title: 'Test article',
+      body: 'Words and such...',
+      topic: 'cats',
+      article_img_url:
+        'https://archives.bulbagarden.net/media/upload/f/fb/0703Carbink.png',
+    };
+    return request(app)
+      .post('/api/articles')
+      .send(testArticle)
+      .expect(201)
+      .then(({ body: { article } }) => {
+        expect(article).toMatchObject({
+          article_id: expect.any(Number),
+          author: 'lurker',
+          title: 'Test article',
+          body: 'Words and such...',
+          topic: 'cats',
+          article_img_url:
+            'https://archives.bulbagarden.net/media/upload/f/fb/0703Carbink.png',
+          votes: 0,
+          created_at: expect.any(String),
+          comment_count: 0,
+        });
+      });
+  });
+  it('201: default article_img_url is added if not specified', () => {
+    const testArticle = {
+      author: 'lurker',
+      topic: 'cats',
+      title: 'Whoops, forgot the img',
+      body: 'But it was added by default!',
+    };
+    return request(app)
+      .post('/api/articles')
+      .send(testArticle)
+      .expect(201)
+      .then(({ body: { article } }) => {
+        expect(article).toMatchObject({
+          article_id: expect.any(Number),
+          author: 'lurker',
+          title: 'Whoops, forgot the img',
+          body: 'But it was added by default!',
+          topic: 'cats',
+          article_img_url:
+            'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700',
+          votes: 0,
+          created_at: expect.any(String),
+          comment_count: 0,
+        });
+      });
+  });
+  it('201: ignores any unnecessary properties included on the request', () => {
+    const testArticle = {
+      author: 'lurker',
+      topic: 'paper',
+      title: 'title',
+      body: 'body',
+      shopping_list: ['tea', 'pizza', 'crumpets'],
+    };
+    return request(app)
+      .post('/api/articles')
+      .send(testArticle)
+      .expect(201)
+      .then(({ body: { article } }) => {
+        expect(article).toMatchObject({
+          article_id: expect.any(Number),
+          author: 'lurker',
+          title: 'title',
+          body: 'body',
+          topic: 'paper',
+          article_img_url:
+            'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700',
+          votes: 0,
+          created_at: expect.any(String),
+          comment_count: 0,
+        });
+      });
+  });
+  it('400: responds with bad request if any of author, topic, title, body are missing', () => {
+    const requiredColumns = ['author', 'topic', 'title', 'body'];
+    const testPromises = requiredColumns.map((column) => {
+      const testArticle = {
+        author: 'lurker',
+        topic: 'cats',
+        title: 'test',
+        body: 'TEST',
+      };
+      delete testArticle[column];
+      return request(app)
+        .post('/api/articles')
+        .send(testArticle)
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe('Bad request');
+        });
+    });
+    return Promise.all(testPromises);
+  });
+  it('404: responds with not found if author is not a registered user or topic does not exist', () => {
+    const userNotFound = request(app)
+      .post('/api/articles')
+      .send({
+        author: 'markiplier',
+        topic: 'cats',
+        title: 'test',
+        body: 'TEST',
+      })
+      .expect(404)
+      .then(({ body: { msg } }) => {
+        expect(msg).toBe('Not found');
+      });
+    const topicNotFound = request(app)
+      .post('/api/articles')
+      .send({
+        author: 'lurker',
+        topic: 'gaming',
+        title: 'test',
+        body: 'TEST',
+      })
+      .expect(404)
+      .then(({ body: { msg } }) => {
+        expect(msg).toBe('Not found');
+      });
+    return Promise.all([userNotFound, topicNotFound]);
+  });
+  it('does not post article if 400 or 404 response', () => {
+    const testArticle = {
+      author: 'joshuatdr',
+      topic: 'cats',
+      title: 'title',
+      body: 'body',
+    };
+    return request(app)
+      .post('/api/articles')
+      .send(testArticle)
+      .expect(404)
+      .then(() => {
+        return request(app).get('/api/articles').expect(200);
+      })
+      .then(({ body: { articles } }) => {
+        expect(articles.length).toBe(13);
+      });
+  });
+});
+
 describe('GET /api/articles/:article_id/comments', () => {
   it('200: responds with all comments for an article, sorted by date in descending order', () => {
     return request(app)
