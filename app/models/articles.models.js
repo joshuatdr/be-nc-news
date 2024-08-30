@@ -1,4 +1,4 @@
-const db = require('../db/connection');
+const db = require('../../db/connection');
 const { checkExists } = require('../utils');
 
 exports.selectArticle = (article_id) => {

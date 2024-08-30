@@ -1,4 +1,4 @@
-const db = require('../db/connection');
+const db = require('../../db/connection');
 
 exports.selectUsers = () => {
   return db
