@@ -74,6 +74,7 @@
   "POST /api/articles/:article_id/comments": {
     "description": "adds a new comment to the specified article",
     "queries": [],
+    "request-body": { "username": "lurker", "body": "wow... cool article" },
     "exampleResponse": {
       "comment": {
         "comment_id": 19,
@@ -88,6 +89,7 @@
   "PATCH /api/articles/:article_id": {
     "description": "updates the vote count for a specified article",
     "queries": [],
+    "request-body": { "inc_votes": 100 },
     "exampleResponse": {
       "article": {
         "article_id": 1,
@@ -96,7 +98,7 @@
         "author": "butter_bridge",
         "body": "I find this existence challenging",
         "created_at": "2020-07-09T20:11:00.000Z",
-        "votes": -100,
+        "votes": 100,
         "article_img_url": "https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700"
       }
     }
@@ -105,6 +107,21 @@
     "description": "deletes the specified comment",
     "queries": [],
     "exampleResponse": { "status": 204 }
+  },
+  "PATCH /api/comments/:comment_id": {
+    "description": "updates the vote count for a specified comment",
+    "queries": [],
+    "request-body": { "inc_votes": -10 },
+    "exampleResponse": {
+      "article": {
+        "comment_id": 9,
+        "body": "Superficially charming",
+        "article_id": 1,
+        "author": "icellusedkars",
+        "votes": -10,
+        "created_at": "2020-01-01T03:08:00.000Z"
+      }
+    }
   },
   "GET /api/users": {
     "description": "serves an array of all users",
