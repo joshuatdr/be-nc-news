@@ -80,3 +80,32 @@ exports.updateArticle = (inc_votes, article_id) => {
       return article;
     });
 };
+
+exports.insertArticle = ({
+  author,
+  topic,
+  title,
+  body,
+  article_img_url = 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700',
+}) => {
+  if (!author || !topic || !title || !body) {
+    return Promise.reject({ status: 400, msg: 'Bad request' });
+  }
+  const checkAuthor = checkExists('users', 'username', author);
+  const checkTopic = checkExists('topics', 'slug', topic);
+  const dbQuery = db.query(
+    `
+      INSERT INTO articles 
+        (author, topic, title, body, article_img_url) 
+      VALUES 
+        ($1, $2, $3, $4, $5) 
+      RETURNING *;
+      `,
+    [author, topic, title, body, article_img_url]
+  );
+  return Promise.all([checkAuthor, checkTopic, dbQuery]).then((result) => {
+    const [article] = result[2].rows;
+    article.comment_count = 0;
+    return article;
+  });
+};
