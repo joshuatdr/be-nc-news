@@ -225,12 +225,12 @@ describe('GET /api/articles', () => {
           });
         });
     });
-    it('400: responds with bad request if topic does not exist', () => {
+    it('404: responds with not found if topic does not exist', () => {
       return request(app)
         .get('/api/articles?topic=gaming;DROP TABLE users;')
-        .expect(400)
+        .expect(404)
         .then(({ body: { msg } }) => {
-          expect(msg).toBe('Bad request');
+          expect(msg).toBe('Not found');
         });
     });
     it('404: responds with not found if topic exists but no articles have this topic', () => {
