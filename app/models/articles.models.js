@@ -37,7 +37,7 @@ exports.selectArticles = (
   const validOrder = ['ASC', 'DESC'];
 
   let queryStr = `
-    SELECT articles.author, title, articles.article_id, topic, articles.created_at, articles.votes, article_img_url, COUNT(comments.article_id)::INT AS comment_count 
+    SELECT articles.author, title, articles.article_id, topic, articles.created_at, articles.votes, article_img_url, COUNT(*) OVER()::INT AS total_count, COUNT(comments.article_id)::INT AS comment_count 
     FROM articles LEFT JOIN comments ON articles.article_id = comments.article_id`;
   let count = 1;
   const queryValues = [];
@@ -75,9 +75,19 @@ exports.selectArticles = (
       if (!result[1].rows.length) {
         return Promise.reject({ status: 404, msg: 'Not found' });
       }
-      return result[1].rows;
+      const total_count = result[1].rows[0].total_count;
+      const articles = result[1].rows.map((article) => {
+        delete article.total_count;
+        return article;
+      });
+      return [articles, total_count];
     }
-    return result[0].rows;
+    const total_count = result[0].rows[0].total_count;
+    const articles = result[0].rows.map((article) => {
+      delete article.total_count;
+      return article;
+    });
+    return [articles, total_count];
   });
 };
 

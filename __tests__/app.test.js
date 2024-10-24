@@ -300,6 +300,15 @@ describe('GET /api/articles', () => {
           expect(msg).toBe('Bad request');
         });
     });
+    it('200: responds with the total_count, displaying the total number of articles after any filters are applied', () => {
+      return request(app)
+        .get('/api/articles?topic=mitch')
+        .expect(200)
+        .then(({ body: { articles, total_count } }) => {
+          expect(articles.length).toBe(10);
+          expect(total_count).toBe(12);
+        });
+    });
   });
 });
 
