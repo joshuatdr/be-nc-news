@@ -292,7 +292,7 @@ describe('GET /api/articles', () => {
           expect(msg).toBe('Bad request');
         });
     });
-    it('400: responds with bad request for limit outside of acceptable range', () => {
+    it('400: responds with bad request for page outside of acceptable range', () => {
       return request(app)
         .get('/api/articles?p=50000')
         .expect(400)
@@ -503,6 +503,68 @@ describe('GET /api/articles/:article_id/comments', () => {
       .expect(404)
       .then(({ body: { msg } }) => {
         expect(msg).toBe('Not found');
+      });
+  });
+  it('200: limit can specify a number of comments to return (default 10)', () => {
+    const defaultLimitTest = request(app)
+      .get('/api/articles/1/comments')
+      .expect(200)
+      .then(({ body: { comments } }) => {
+        expect(comments.length).toBe(10);
+      });
+    const specifiedLimitTest = request(app)
+      .get('/api/articles/1/comments?limit=5')
+      .expect(200)
+      .then(({ body: { comments } }) => {
+        expect(comments.length).toBe(5);
+      });
+    return Promise.all([defaultLimitTest, specifiedLimitTest]);
+  });
+  it('400: responds with bad request for invalid limit parameter', () => {
+    return request(app)
+      .get('/api/articles/1/comments?limit=onehundred')
+      .expect(400)
+      .then(({ body: { msg } }) => {
+        expect(msg).toBe('Bad request');
+      });
+  });
+  it('400: responds with bad request for limit outside of acceptable range', () => {
+    return request(app)
+      .get('/api/articles/1/comments?limit=10500')
+      .expect(400)
+      .then(({ body: { msg } }) => {
+        expect(msg).toBe('Bad request');
+      });
+  });
+  it("200: 'p' can specify the page to begin returning comments (default 1)", () => {
+    const firstPageTest = request(app)
+      .get('/api/articles/1/comments')
+      .expect(200)
+      .then(({ body: { comments } }) => {
+        expect(comments.length).toBe(10);
+      });
+    const secondPageTest = request(app)
+      .get('/api/articles/1/comments?p=2')
+      .expect(200)
+      .then(({ body: { comments } }) => {
+        expect(comments.length).toBe(1);
+      });
+    return Promise.all([firstPageTest, secondPageTest]);
+  });
+  it("400: responds with bad request for invalid 'p' parameter", () => {
+    return request(app)
+      .get('/api/articles/1/comments?p=test')
+      .expect(400)
+      .then(({ body: { msg } }) => {
+        expect(msg).toBe('Bad request');
+      });
+  });
+  it('400: responds with bad request for page outside of acceptable range', () => {
+    return request(app)
+      .get('/api/articles/1/comments?p=-1')
+      .expect(400)
+      .then(({ body: { msg } }) => {
+        expect(msg).toBe('Bad request');
       });
   });
 });
