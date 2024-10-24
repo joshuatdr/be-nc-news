@@ -18,7 +18,13 @@ exports.selectArticle = (article_id) => {
     });
 };
 
-exports.selectArticles = (sort_by = 'created_at', order = 'DESC', topic) => {
+exports.selectArticles = (
+  sort_by = 'created_at',
+  order = 'DESC',
+  topic,
+  limit = 10,
+  p = 1
+) => {
   const validColumns = [
     'author',
     'title',
@@ -33,24 +39,33 @@ exports.selectArticles = (sort_by = 'created_at', order = 'DESC', topic) => {
   let queryStr = `
     SELECT articles.author, title, articles.article_id, topic, articles.created_at, articles.votes, article_img_url, COUNT(comments.article_id)::INT AS comment_count 
     FROM articles LEFT JOIN comments ON articles.article_id = comments.article_id`;
+  let count = 1;
   const queryValues = [];
   const queryProms = [];
+
+  if (
+    !validColumns.includes(sort_by) ||
+    !validOrder.includes(order.toUpperCase()) ||
+    Number(limit) <= 0 ||
+    Number(limit) > 10000 ||
+    Number(p) <= 0 ||
+    Number(p) > 10000
+  ) {
+    return Promise.reject({ status: 400, msg: 'Bad request' });
+  }
 
   if (topic) {
     const checkTopic = checkExists('topics', 'slug', topic);
     queryValues.push(topic);
     queryProms.push(checkTopic);
-    queryStr += ` WHERE topic = $1`;
+    queryStr += ` WHERE topic = $${count}`;
+    count++;
   }
 
-  if (
-    !validColumns.includes(sort_by) ||
-    !validOrder.includes(order.toUpperCase())
-  ) {
-    return Promise.reject({ status: 400, msg: 'Bad request' });
-  }
-
-  queryStr += ` GROUP BY articles.article_id ORDER BY ${sort_by} ${order}`;
+  queryStr += ` GROUP BY articles.article_id ORDER BY ${sort_by} ${order} LIMIT $${count} OFFSET $${
+    count + 1
+  };`;
+  queryValues.push(limit, (p - 1) * limit);
 
   const dbQuery = db.query(queryStr, queryValues);
   queryProms.push(dbQuery);
