@@ -8,7 +8,11 @@ const { selectArticle } = require('../models/articles.models');
 
 exports.getCommentsByArticle = (req, res, next) => {
   const { article_id } = req.params;
-  Promise.all([selectCommentsByArticle(article_id), selectArticle(article_id)])
+  const { limit, p } = req.query;
+  Promise.all([
+    selectCommentsByArticle(article_id, limit, p),
+    selectArticle(article_id),
+  ])
     .then(([comments]) => {
       res.status(200).send({ comments });
     })

@@ -1,12 +1,25 @@
 const db = require('../../db/connection');
 
-exports.selectCommentsByArticle = (article_id) => {
+exports.selectCommentsByArticle = (article_id, limit = 10, p = 1) => {
+  const validLimit = Number(limit);
+  const validOffset = Number(p);
+  if (
+    isNaN(validLimit) ||
+    isNaN(validOffset) ||
+    validLimit < 0 ||
+    validLimit > 10000 ||
+    validOffset < 0 ||
+    validOffset > 10000
+  ) {
+    return Promise.reject({ status: 400, msg: 'Bad request' });
+  }
   return db
     .query(
       `SELECT * FROM comments 
        WHERE article_id = $1 
-       ORDER BY created_at DESC`,
-      [article_id]
+       ORDER BY created_at DESC
+       LIMIT $2 OFFSET $3;`,
+      [article_id, validLimit, (validOffset - 1) * validLimit]
     )
     .then(({ rows }) => {
       return rows;
