@@ -93,7 +93,7 @@ describe('GET /api/articles', () => {
       .get('/api/articles')
       .expect(200)
       .then(({ body: { articles } }) => {
-        expect(articles.length).toBe(13);
+        expect(articles.length).toBe(10);
         expect(articles).toBeSortedBy('created_at', { descending: true });
         articles.forEach((article) => {
           expect(article).toMatchObject({
@@ -132,9 +132,6 @@ describe('GET /api/articles', () => {
           [2, 9],
           [0, 10],
           [0, 4],
-          [0, 8],
-          [0, 11],
-          [0, 7],
         ]);
       });
   });
@@ -239,6 +236,77 @@ describe('GET /api/articles', () => {
         .expect(404)
         .then(({ body: { msg } }) => {
           expect(msg).toBe('Not found');
+        });
+    });
+    it('200: limit can specify a number of articles to return (default 10)', () => {
+      const defaultLimitTest = request(app)
+        .get('/api/articles')
+        .expect(200)
+        .then(({ body: { articles } }) => {
+          expect(articles.length).toBe(10);
+        });
+      const specifiedLimitTest = request(app)
+        .get('/api/articles?limit=5')
+        .expect(200)
+        .then(({ body: { articles } }) => {
+          expect(articles.length).toBe(5);
+        });
+      return Promise.all([defaultLimitTest, specifiedLimitTest]);
+    });
+    it('400: responds with bad request for invalid limit parameter', () => {
+      return request(app)
+        .get('/api/articles?limit=onehundred')
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe('Bad request');
+        });
+    });
+    it('400: responds with bad request for limit outside of acceptable range', () => {
+      return request(app)
+        .get('/api/articles?limit=10500')
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe('Bad request');
+        });
+    });
+    it("200: 'p' can specify the page to begin returning articles (default 1)", () => {
+      const firstPageTest = request(app)
+        .get('/api/articles')
+        .expect(200)
+        .then(({ body: { articles } }) => {
+          expect(articles.length).toBe(10);
+        });
+      const secondPageTest = request(app)
+        .get('/api/articles?p=2')
+        .expect(200)
+        .then(({ body: { articles } }) => {
+          expect(articles.length).toBe(3);
+        });
+      return Promise.all([firstPageTest, secondPageTest]);
+    });
+    it("400: responds with bad request for invalid 'p' parameter", () => {
+      return request(app)
+        .get('/api/articles?p=test')
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe('Bad request');
+        });
+    });
+    it('400: responds with bad request for limit outside of acceptable range', () => {
+      return request(app)
+        .get('/api/articles?p=50000')
+        .expect(400)
+        .then(({ body: { msg } }) => {
+          expect(msg).toBe('Bad request');
+        });
+    });
+    it('200: responds with the total_count, displaying the total number of articles after any filters are applied', () => {
+      return request(app)
+        .get('/api/articles?topic=mitch')
+        .expect(200)
+        .then(({ body: { articles, total_count } }) => {
+          expect(articles.length).toBe(10);
+          expect(total_count).toBe(12);
         });
     });
   });
@@ -385,7 +453,7 @@ describe('POST /api/articles', () => {
       .send(testArticle)
       .expect(404)
       .then(() => {
-        return request(app).get('/api/articles').expect(200);
+        return request(app).get('/api/articles?limit=15').expect(200);
       })
       .then(({ body: { articles } }) => {
         expect(articles.length).toBe(13);

@@ -24,7 +24,11 @@
         ]
       },
       { "order (default: desc)": ["asc", "desc"] },
-      { "topic": ["any"] }
+      { "topic": ["any"] },
+      { "limit (default: 10)": "the number of articles to return" },
+      {
+        "p (default: 1)": "the page number from which to start returning articles"
+      }
     ],
     "exampleResponse": {
       "articles": [
@@ -39,6 +43,30 @@
           "comment_count": 6
         }
       ]
+    }
+  },
+  "POST /api/articles": {
+    "description": "post a new article",
+    "queries": [],
+    "request-body": {
+      "author": "lurker",
+      "title": "Test article",
+      "body": "Words and such...",
+      "topic": "cats",
+      "article_img_url": "https://archives.bulbagarden.net/media/upload/f/fb/0703Carbink.png"
+    },
+    "exampleResponse": {
+      "article": {
+        "article_id": 14,
+        "author": "lurker",
+        "title": "Test article",
+        "body": "Words and such...",
+        "topic": "cats",
+        "article_img_url": "https://archives.bulbagarden.net/media/upload/f/fb/0703Carbink.png",
+        "votes": 0,
+        "created_at": "2020-04-17T01:08:00.000Z",
+        "comment_count": 0
+      }
     }
   },
   "GET /api/articles/:article_id": {
