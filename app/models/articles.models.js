@@ -25,6 +25,8 @@ exports.selectArticles = (
   limit = 10,
   p = 1
 ) => {
+  const validLimit = Number(limit);
+  const validOffset = Number(p);
   const validColumns = [
     'author',
     'title',
@@ -46,10 +48,12 @@ exports.selectArticles = (
   if (
     !validColumns.includes(sort_by) ||
     !validOrder.includes(order.toUpperCase()) ||
-    Number(limit) <= 0 ||
-    Number(limit) > 10000 ||
-    Number(p) <= 0 ||
-    Number(p) > 10000
+    isNaN(validLimit) ||
+    isNaN(validOffset) ||
+    validLimit <= 0 ||
+    validLimit > 10000 ||
+    validOffset <= 0 ||
+    validOffset > 10000
   ) {
     return Promise.reject({ status: 400, msg: 'Bad request' });
   }
@@ -65,7 +69,7 @@ exports.selectArticles = (
   queryStr += ` GROUP BY articles.article_id ORDER BY ${sort_by} ${order} LIMIT $${count} OFFSET $${
     count + 1
   };`;
-  queryValues.push(limit, (p - 1) * limit);
+  queryValues.push(validLimit, (validOffset - 1) * validLimit);
 
   const dbQuery = db.query(queryStr, queryValues);
   queryProms.push(dbQuery);
