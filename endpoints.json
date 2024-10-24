@@ -27,7 +27,7 @@
       { "topic": ["any"] },
       { "limit (default: 10)": "the number of articles to return" },
       {
-        "p (default: 1)": "the page number from which to start returning articles"
+        "p (default: 1)": "the page number to start from"
       }
     ],
     "exampleResponse": {
@@ -87,7 +87,12 @@
   },
   "GET /api/articles/:article_id/comments": {
     "description": "serves all comments for the specified article",
-    "queries": [],
+    "queries": [
+      { "limit (default: 10)": "the number of comments to return" },
+      {
+        "p (default: 1)": "the page number to start from"
+      }
+    ],
     "exampleResponse": {
       "comments": {
         "comment_id": 8,
